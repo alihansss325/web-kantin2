@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cart - Kantin Digital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Test Cart Page</h1>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Add Test Item</h5>
+                    </div>
+                    <div class="card-body">
+                        <button onclick="addTestItem()" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Test Item
+                        </button>
+                        <button onclick="clearCart()" class="btn btn-danger ms-2">
+                            <i class="fas fa-trash"></i> Clear Cart
+                        </button>
+                        <button onclick="showCart()" class="btn btn-info ms-2">
+                            <i class="fas fa-eye"></i> Show Cart
+                        </button>
+                        <button onclick="debugLocalStorage()" class="btn btn-warning ms-2">
+                            <i class="fas fa-bug"></i> Debug
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Cart Contents</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="cartDisplay">
+                            <p class="text-muted">Cart is empty</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Console Output</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="consoleOutput" style="background: #f8f9fa; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                            Console output will appear here...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Override console.log to display on page
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const output = document.getElementById('consoleOutput');
+            if (output) {
+                output.innerHTML += args.join(' ') + '<br>';
+                output.scrollTop = output.scrollHeight;
+            }
+        };
+
+        function addTestItem() {
+            console.log('=== ADDING TEST ITEM ===');
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const testItem = {
+                id: Date.now(),
+                name: 'Test Product ' + (cart.length + 1),
+                price: 10000 + (cart.length * 1000),
+                quantity: 1
+            };
+            
+            cart.push(testItem);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            console.log('Added item:', testItem);
+            console.log('Cart now has:', cart.length, 'items');
+            displayCart();
+        }
+
+        function clearCart() {
+            console.log('=== CLEARING CART ===');
+            localStorage.removeItem('cart');
+            console.log('Cart cleared');
+            displayCart();
+        }
+
+        function showCart() {
+            console.log('=== SHOWING CART ===');
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            console.log('Cart contents:', cart);
+            console.log('Number of items:', cart.length);
+            displayCart();
+        }
+
+        function debugLocalStorage() {
+            console.log('=== LOCAL STORAGE DEBUG ===');
+            console.log('All localStorage keys:', Object.keys(localStorage));
+            console.log('Cart key exists:', 'cart' in localStorage);
+            console.log('Cart raw value:', localStorage.getItem('cart'));
+            console.log('Cart parsed:', JSON.parse(localStorage.getItem('cart') || '[]'));
+            console.log('=== END DEBUG ===');
+        }
+
+        function displayCart() {
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const display = document.getElementById('cartDisplay');
+            
+            if (cart.length === 0) {
+                display.innerHTML = '<p class="text-muted">Cart is empty</p>';
+                return;
+            }
+            
+            let html = '<div class="list-group">';
+            cart.forEach((item, index) => {
+                html += `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${item.name}</h6>
+                                <small>Rp ${item.price.toLocaleString('id-ID')} x ${item.quantity}</small>
+                            </div>
+                            <div>
+                                <strong>Rp ${(item.price * item.quantity).toLocaleString('id-ID')}</strong>
+                                <button onclick="removeItem(${index})" class="btn btn-sm btn-outline-danger ms-2">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            html += `
+                <div class="mt-3 p-3 bg-light">
+                    <h5>Total: Rp ${total.toLocaleString('id-ID')}</h5>
+                </div>
+            `;
+            
+            display.innerHTML = html;
+        }
+
+        function removeItem(index) {
+            console.log('=== REMOVING ITEM ===');
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const removed = cart.splice(index, 1)[0];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            console.log('Removed item:', removed);
+            console.log('Cart now has:', cart.length, 'items');
+            displayCart();
+        }
+
+        // Initialize display
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page loaded');
+            displayCart();
+        });
+    </script>
+</body>
+</html>

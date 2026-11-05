@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Cart Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .test-section {
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .console-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Simple Cart Test</h1>
+        <p class="text-muted">Halaman testing untuk memastikan localStorage dan cart berfungsi</p>
+        
+        <!-- Test Section 1: Basic localStorage -->
+        <div class="test-section">
+            <h3>Test 1: Basic LocalStorage</h3>
+            <button onclick="testBasicStorage()" class="btn btn-primary me-2">Test Basic Storage</button>
+            <button onclick="clearTestStorage()" class="btn btn-danger">Clear Test Storage</button>
+            <div class="mt-3">
+                <strong>Result:</strong> <span id="basicResult">-</span>
+            </div>
+        </div>
+        
+        <!-- Test Section 2: Cart Simulation -->
+        <div class="test-section">
+            <h3>Test 2: Cart Simulation</h3>
+            <button onclick="addTestItem()" class="btn btn-success me-2">Add Test Item</button>
+            <button onclick="viewCart()" class="btn btn-info me-2">View Cart</button>
+            <button onclick="clearCart()" class="btn btn-danger">Clear Cart</button>
+            <div class="mt-3">
+                <strong>Cart Items:</strong> <span id="cartCount">0</span>
+            </div>
+            <div id="cartItems" class="mt-2"></div>
+        </div>
+        
+        <!-- Test Section 3: Real Cart Test -->
+        <div class="test-section">
+            <h3>Test 3: Real Cart Integration</h3>
+            <button onclick="simulateAddToCart()" class="btn btn-warning me-2">Simulate Add to Cart</button>
+            <button onclick="checkRealCart()" class="btn btn-secondary">Check Real Cart</button>
+            <div class="mt-3">
+                <strong>Real Cart Status:</strong> <span id="realCartStatus">-</span>
+            </div>
+        </div>
+        
+        <!-- Console Output -->
+        <div class="test-section">
+            <h3>Console Output</h3>
+            <div class="console-output" id="consoleOutput">
+                Console output will appear here...
+            </div>
+            <button onclick="clearConsole()" class="btn btn-sm btn-outline-secondary mt-2">Clear Console</button>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="test-section">
+            <h3>Navigation</h3>
+            <a href="/" class="btn btn-outline-primary me-2">Homepage</a>
+            <a href="/menu" class="btn btn-outline-primary me-2">Menu Page</a>
+            <a href="/cart" class="btn btn-outline-primary">Cart Page</a>
+        </div>
+    </div>
+
+    <script>
+        // Override console.log to display on page
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToConsole(message, type = 'log') {
+            const output = document.getElementById('consoleOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'warn' ? 'orange' : 'black';
+            
+            output.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsole(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsole(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToConsole(args.join(' '), 'warn');
+        };
+        
+        // Test Functions
+        function testBasicStorage() {
+            console.log('=== BASIC STORAGE TEST ===');
+            try {
+                // Test set
+                localStorage.setItem('testKey', 'testValue');
+                console.log('✓ Set testKey = testValue');
+                
+                // Test get
+                const value = localStorage.getItem('testKey');
+                console.log('✓ Get testKey:', value);
+                
+                // Test remove
+                localStorage.removeItem('testKey');
+                console.log('✓ Removed testKey');
+                
+                // Verify removal
+                const removedValue = localStorage.getItem('testKey');
+                console.log('✓ After removal:', removedValue);
+                
+                document.getElementById('basicResult').textContent = 'SUCCESS - LocalStorage works!';
+                document.getElementById('basicResult').style.color = 'green';
+                
+            } catch (error) {
+                console.error('✗ LocalStorage error:', error);
+                document.getElementById('basicResult').textContent = 'ERROR - ' + error.message;
+                document.getElementById('basicResult').style.color = 'red';
+            }
+            console.log('=== END BASIC STORAGE TEST ===');
+        }
+        
+        function clearTestStorage() {
+            localStorage.removeItem('testKey');
+            document.getElementById('basicResult').textContent = 'Cleared';
+            document.getElementById('basicResult').style.color = 'black';
+            console.log('Test storage cleared');
+        }
+        
+        function addTestItem() {
+            console.log('=== ADD TEST ITEM ===');
+            try {
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                const testItem = {
+                    id: Date.now(),
+                    name: 'Test Product ' + (cart.length + 1),
+                    price: 10000 + Math.floor(Math.random() * 5000),
+                    quantity: 1
+                };
+                
+                cart.push(testItem);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                
+                console.log('✓ Added item:', testItem);
+                console.log('✓ Cart now has', cart.length, 'items');
+                
+                updateCartDisplay();
+                
+            } catch (error) {
+                console.error('✗ Error adding test item:', error);
+            }
+            console.log('=== END ADD TEST ITEM ===');
+        }
+        
+        function viewCart() {
+            console.log('=== VIEW CART ===');
+            try {
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                console.log('✓ Cart contents:', cart);
+                console.log('✓ Number of items:', cart.length);
+                
+                updateCartDisplay();
+                
+            } catch (error) {
+                console.error('✗ Error viewing cart:', error);
+            }
+            console.log('=== END VIEW CART ===');
+        }
+        
+        function clearCart() {
+            console.log('=== CLEAR CART ===');
+            try {
+                localStorage.removeItem('cart');
+                console.log('✓ Cart cleared from localStorage');
+                
+                updateCartDisplay();
+                
+            } catch (error) {
+                console.error('✗ Error clearing cart:', error);
+            }
+            console.log('=== END CLEAR CART ===');
+        }
+        
+        function updateCartDisplay() {
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const cartCount = document.getElementById('cartCount');
+            const cartItems = document.getElementById('cartItems');
+            
+            cartCount.textContent = cart.length;
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-muted">Cart is empty</p>';
+            } else {
+                let html = '<ul class="list-group">';
+                cart.forEach((item, index) => {
+                    html += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${item.name}</strong><br>
+                                <small>Rp ${item.price.toLocaleString('id-ID')} x ${item.quantity}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">
+                                Rp ${(item.price * item.quantity).toLocaleString('id-ID')}
+                            </span>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                cartItems.innerHTML = html;
+            }
+        }
+        
+        function simulateAddToCart() {
+            console.log('=== SIMULATE ADD TO CART ===');
+            try {
+                // Simulate the same function from homepage
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                const existingItem = cart.find(item => item.id === 1);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                    console.log('✓ Updated quantity for existing item');
+                } else {
+                    cart.push({
+                        id: 1,
+                        name: 'Nasi Goreng',
+                        price: 13000,
+                        quantity: 1
+                    });
+                    console.log('✓ Added new item to cart');
+                }
+                
+                localStorage.setItem('cart', JSON.stringify(cart));
+                console.log('✓ Cart saved to localStorage');
+                console.log('✓ Cart now has', cart.length, 'items');
+                
+                updateCartDisplay();
+                document.getElementById('realCartStatus').textContent = 'SUCCESS - Item added!';
+                document.getElementById('realCartStatus').style.color = 'green';
+                
+            } catch (error) {
+                console.error('✗ Error simulating add to cart:', error);
+                document.getElementById('realCartStatus').textContent = 'ERROR - ' + error.message;
+                document.getElementById('realCartStatus').style.color = 'red';
+            }
+            console.log('=== END SIMULATE ADD TO CART ===');
+        }
+        
+        function checkRealCart() {
+            console.log('=== CHECK REAL CART ===');
+            try {
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                console.log('✓ Real cart contents:', cart);
+                console.log('✓ Real cart length:', cart.length);
+                
+                if (cart.length > 0) {
+                    document.getElementById('realCartStatus').textContent = `FOUND - ${cart.length} items`;
+                    document.getElementById('realCartStatus').style.color = 'green';
+                } else {
+                    document.getElementById('realCartStatus').textContent = 'EMPTY - No items found';
+                    document.getElementById('realCartStatus').style.color = 'orange';
+                }
+                
+                updateCartDisplay();
+                
+            } catch (error) {
+                console.error('✗ Error checking real cart:', error);
+                document.getElementById('realCartStatus').textContent = 'ERROR - ' + error.message;
+                document.getElementById('realCartStatus').style.color = 'red';
+            }
+            console.log('=== END CHECK REAL CART ===');
+        }
+        
+        function clearConsole() {
+            document.getElementById('consoleOutput').innerHTML = 'Console output will appear here...';
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Simple Cart Test page loaded');
+            console.log('LocalStorage available:', typeof Storage !== 'undefined');
+            updateCartDisplay();
+        });
+    </script>
+</body>
+</html>
